@@ -1,0 +1,125 @@
+# REFERENCIA en sintaxis CLI de lo configurado por GUI en el FortiGate (FortiOS 7.0.9).
+# El respaldo real se exporta desde la GUI: usuario > Configuration > Backup.
+# Antes de publicar un backup, reemplazar por <OCULTO> las lineas "set psksecret ENC" y "set password ENC".
+
+config system interface
+    edit "port1"
+        set mode dhcp
+        set defaultgw disable
+    next
+    edit "port2"
+        set alias "Wan"
+        set role wan
+        set mode static
+        set ip 20.25.98.2 255.255.255.252
+        set allowaccess ping
+    next
+    edit "port3"
+        set alias "Lan-Servidor"
+        set role lan
+        set mode static
+        set ip 10.7.98.1 255.255.255.240
+        set allowaccess ping
+    next
+end
+
+config router static
+    edit 1
+        set gateway 20.25.98.1
+        set device "port2"
+    next
+end
+
+config firewall address
+    edit "LAN-SERVIDOR-NET"
+        set subnet 10.7.98.0 255.255.255.240
+    next
+    edit "SSLVPN_TUNNEL_ADDR1"
+        set type iprange
+        set start-ip 10.7.25.10
+        set end-ip 10.7.25.20
+    next
+end
+
+config firewall vip
+    edit "VIP-HTTPS"
+        set extip 20.25.98.2
+        set extintf "port2"
+        set portforward enable
+        set mappedip "10.7.98.2"
+        set protocol tcp
+        set extport 443
+        set mappedport 443
+    next
+end
+
+config user local
+    edit "vpnuser"
+        set type password
+        set passwd <CONTRASENA-OCULTA>
+    next
+end
+config user group
+    edit "SSL-VPN-Users"
+        set member "vpnuser"
+    next
+end
+
+config vpn ssl web portal
+    edit "full-access"
+        set tunnel-mode enable
+        set ip-pools "SSLVPN_TUNNEL_ADDR1"
+        set split-tunneling enable
+    next
+end
+
+config vpn ssl settings
+    set servercert "Fortinet_Factory"
+    set tunnel-ip-pools "SSLVPN_TUNNEL_ADDR1"
+    set source-interface "port2"
+    set port 10443
+    config authentication-rule
+        edit 1
+            set groups "SSL-VPN-Users"
+            set portal "full-access"
+        next
+        edit 2
+            set portal "web-access"
+        next
+    end
+end
+
+config firewall policy
+    edit 0
+        set name "lan-to-wan"
+        set srcintf "port3"
+        set dstintf "port2"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set nat enable
+    next
+    edit 0
+        set name "WAN-to-WEB"
+        set srcintf "port2"
+        set dstintf "port3"
+        set srcaddr "all"
+        set dstaddr "VIP-HTTPS"
+        set action accept
+        set schedule "always"
+        set service "HTTPS"
+    next
+    edit 0
+        set name "VPN-to-SSH"
+        set srcintf "ssl.root"
+        set dstintf "port3"
+        set srcaddr "all"
+        set dstaddr "LAN-SERVIDOR-NET"
+        set groups "SSL-VPN-Users"
+        set action accept
+        set schedule "always"
+        set service "SSH" "PING"
+    next
+end
