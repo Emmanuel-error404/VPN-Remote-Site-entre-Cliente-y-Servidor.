@@ -1,0 +1,33 @@
+! Equipo: R2 (Cisco IOS) - gateway de la VLAN 10, DHCP y NAT
+! Infraestructura 3: R2 ya no es extremo de VPN (sin crypto)
+enable
+configure terminal
+hostname R2
+
+interface f0/0
+ description WAN
+ ip address 20.25.7.2 255.255.255.252
+ ip nat outside
+ no shutdown
+interface g1/0
+ description LAN-USUARIOS
+ no ip address
+ no shutdown
+interface g1/0.10
+ description VLAN10-USUARIOS
+ encapsulation dot1Q 10
+ ip address 10.20.25.1 255.255.255.128
+ ip nat inside
+ip route 0.0.0.0 0.0.0.0 20.25.7.1
+
+ip dhcp excluded-address 10.20.25.1 10.20.25.9
+ip dhcp excluded-address 10.20.25.101 10.20.25.126
+ip dhcp pool USUARIOS
+ network 10.20.25.0 255.255.255.128
+ default-router 10.20.25.1
+ dns-server 8.8.8.8
+
+access-list 1 permit 10.20.25.0 0.0.0.127
+ip nat inside source list 1 interface FastEthernet0/0 overload
+end
+write memory
