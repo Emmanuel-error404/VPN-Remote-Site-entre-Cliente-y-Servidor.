@@ -1,0 +1,14 @@
+! Equipo: ISP (Cisco IOS) - direccionamiento publico
+enable
+configure terminal
+hostname ISP
+interface f0/0
+ description HACIA-R2
+ ip address 20.25.7.1 255.255.255.252
+ no shutdown
+interface g1/0
+ description HACIA-FORTIGATE
+ ip address 20.25.98.1 255.255.255.252
+ no shutdown
+end
+write memory
