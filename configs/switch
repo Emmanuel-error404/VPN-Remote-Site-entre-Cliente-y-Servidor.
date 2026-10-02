@@ -1,0 +1,22 @@
+! Equipo: SW1 (switch Cisco IOS) - VLAN 10
+! Ajustar Gi0/0 y Gi0/1 a los puertos reales de cada enlace
+enable
+configure terminal
+hostname SW1
+vlan 10
+ name USUARIOS
+exit
+interface Gi0/0
+ description TRUNK-HACIA-R2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10
+ no shutdown
+interface Gi0/1
+ description ACCESS-KALI
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+ no shutdown
+end
+write memory
